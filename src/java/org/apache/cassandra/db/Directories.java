@@ -637,7 +637,12 @@ public class Directories
 
     public SSTableLister sstableLister(OnTxnErr onTxnErr)
     {
-        return new SSTableLister(onTxnErr);
+        return new SSTableLister(null, onTxnErr);
+    }
+
+    public SSTableLister sstableLister(File directory, OnTxnErr onTxnErr)
+    {
+        return new SSTableLister(directory, onTxnErr);
     }
 
     public class SSTableLister
@@ -650,9 +655,11 @@ public class Directories
         private final Map<Descriptor, Set<Component>> components = new HashMap<>();
         private boolean filtered;
         private String snapshotName;
+        private File[] directory;
 
-        private SSTableLister(OnTxnErr onTxnErr)
+        private SSTableLister(File directory, OnTxnErr onTxnErr)
         {
+            this.directory = new File[]{directory};
             this.onTxnErr = onTxnErr;
         }
 
@@ -714,7 +721,9 @@ public class Directories
             if (filtered)
                 return;
 
-            for (File location : dataPaths)
+            File[] lookupDir = directory[0] == null ? dataPaths : directory;
+
+            for (File location : lookupDir)
             {
                 if (BlacklistedDirectories.isUnreadable(location))
                     continue;

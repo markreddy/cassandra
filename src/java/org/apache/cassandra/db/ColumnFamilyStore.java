@@ -665,26 +665,47 @@ public class ColumnFamilyStore implements ColumnFamilyStoreMBean
      * @param ksName The keyspace name
      * @param cfName The columnFamily name
      */
-    public static synchronized void loadNewSSTables(String ksName, String cfName)
+    public static synchronized void loadNewSSTables(String ksName, String cfName, String dirPath)
     {
         /** ks/cf existence checks will be done by open and getCFS methods for us */
         Keyspace keyspace = Keyspace.open(ksName);
-        keyspace.getColumnFamilyStore(cfName).loadNewSSTables();
+        keyspace.getColumnFamilyStore(cfName).loadNewSSTables(dirPath);
+    }
+
+
+    public synchronized void loadNewSSTables()
+    {
+        loadNewSSTables(null);
     }
 
     /**
      * #{@inheritDoc}
      */
-    public synchronized void loadNewSSTables()
+    public synchronized void loadNewSSTables(String dirPath)
     {
         logger.info("Loading new SSTables for {}/{}...", keyspace.getName(), name);
+
+        File dir = null;
+        if (dirPath != null && !dirPath.isEmpty())
+        {
+            dir = new File(dirPath);
+            if (!dir.exists())
+            {
+                throw new RuntimeException(String.format("Directory %s does not exist", dirPath));
+            }
+            if (!Directories.verifyFullPermissions(dir, dirPath))
+            {
+                throw new RuntimeException("Insufficient permissions on directory " + dirPath);
+            }
+        }
 
         Set<Descriptor> currentDescriptors = new HashSet<>();
         for (SSTableReader sstable : getSSTables(SSTableSet.CANONICAL))
             currentDescriptors.add(sstable.descriptor);
         Set<SSTableReader> newSSTables = new HashSet<>();
-
-        Directories.SSTableLister lister = getDirectories().sstableLister(Directories.OnTxnErr.IGNORE).skipTemporary(true);
+        Directories.SSTableLister lister = dir == null ?
+                directories.sstableLister(Directories.OnTxnErr.IGNORE).skipTemporary(true) :
+                directories.sstableLister(dir, Directories.OnTxnErr.IGNORE).skipTemporary(true);
         for (Map.Entry<Descriptor, Set<Component>> entry : lister.list().entrySet())
         {
             Descriptor descriptor = entry.getKey();
@@ -712,11 +733,12 @@ public class ColumnFamilyStore implements ColumnFamilyStoreMBean
             // Increment the generation until we find a filename that doesn't exist. This is needed because the new
             // SSTables that are being loaded might already use these generation numbers.
             Descriptor newDescriptor;
+
             do
             {
                 newDescriptor = new Descriptor(descriptor.version,
-                                               descriptor.directory,
-                                               descriptor.ksname,
+                                               //If dir is get the SSTables dir, otherwise get the most suitable location to load into
+                                               dir == null ? descriptor.directory : directories.getWriteableLocationAsFile(new File(descriptor.baseFilename()).length()),                                               descriptor.ksname,
                                                descriptor.cfname,
                                                fileIndexGenerator.incrementAndGet(),
                                                descriptor.formatType,
