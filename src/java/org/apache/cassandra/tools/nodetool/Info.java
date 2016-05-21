@@ -79,6 +79,9 @@ public class Info extends NodeToolCmd
         System.out.printf("%-23s: %s%n", "Data Center", probe.getDataCenter());
         System.out.printf("%-23s: %s%n", "Rack", probe.getRack());
 
+        // Local seeds
+        System.out.printf("%-23s: %s%n", "Seeds", probe.getLocalSeeds());
+
         // Exceptions
         System.out.printf("%-23s: %s%n", "Exceptions", probe.getStorageMetric("Exceptions"));
 

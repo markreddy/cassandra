@@ -494,6 +494,11 @@ public class NodeProbe implements AutoCloseable
         return ssProxy.getLocalHostId();
     }
 
+    public List<String> getLocalSeeds()
+    {
+        return ssProxy.getLocalSeeds();
+    }
+
     public Map<String, String> getHostIdMap()
     {
         return ssProxy.getEndpointToHostId();

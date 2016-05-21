@@ -168,6 +168,9 @@ public interface StorageServiceMBean extends NotificationEmitter
     /** Retrieve the mapping of host ID to endpoint */
     public Map<String, String> getHostIdToEndpoint();
 
+    /** Retrieve the list of seeds for this host */
+    public List<String> getLocalSeeds();
+
     /** Human-readable load value */
     public String getLoadString();
 

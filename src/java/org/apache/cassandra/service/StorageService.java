@@ -1827,6 +1827,14 @@ public class StorageService extends NotificationBroadcasterSupport implements IE
         return mapOut;
     }
 
+    @Override
+    public List<String>  getLocalSeeds()
+    {
+        List<String> seeds = new ArrayList<>();
+        DatabaseDescriptor.getSeeds().forEach(s -> seeds.add(s.getHostAddress()));
+        return seeds;
+    }
+
     /**
      * Construct the range to endpoint mapping based on the true view
      * of the world.
