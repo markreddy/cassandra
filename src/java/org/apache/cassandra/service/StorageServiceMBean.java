@@ -565,6 +565,12 @@ public interface StorageServiceMBean extends NotificationEmitter
     public void rescheduleFailedDeletions();
 
     /**
+     * @deprecated use {@link #loadNewSSTables(String ksName, String tableName, String dirPath)} instead.
+     */
+    @Deprecated
+    public void loadNewSSTables(String ksName, String tableName);
+
+    /**
      * Load new SSTables to the given keyspace/table
      *
      * @param ksName The parent keyspace name
